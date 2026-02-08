@@ -1,0 +1,21 @@
+-- Paste these into Power BI Model > New Measure
+
+Total Revenue = SUMX(OnlineRetail, OnlineRetail[Quantity] * OnlineRetail[UnitPrice])
+
+Monthly Revenue = CALCULATE([Total Revenue], ALLEXCEPT(OnlineRetail, OnlineRetail[InvoiceDate].[Year], OnlineRetail[InvoiceDate].[Month]))
+
+Cohort Retention Rate = 
+DIVIDE(
+    COUNTROWS(
+        FILTER(
+            ALL(OnlineRetail),
+            OnlineRetail[Cohort Month] = MAX(OnlineRetail[Cohort Month]) &&
+            DATEDIFF(MAX(OnlineRetail[Cohort Month]), OnlineRetail[InvoiceDate].[Date], MONTH) = SELECTEDVALUE(Period[Period])
+        )
+    ),
+    CALCULATE(COUNTROWS(OnlineRetail), OnlineRetail[Cohort Month] = MAX(OnlineRetail[Cohort Month]), ALL(Period))
+)
+
+Top Products Revenue = TOPN(10, SUMMARIZE(OnlineRetail, OnlineRetail[StockCode], OnlineRetail[Description], "Revenue", [Total Revenue]), [Total Revenue], DESC)
+
+Estimated Profit = [Total Revenue] * 0.70  // Adjust margin
